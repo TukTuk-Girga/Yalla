@@ -1,432 +1,201 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>توكتوكي | جرجا - برديس - البلينا - العسيرات</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-<style>
-  :root{
-    --dark:#0B1622; --dark-2:#131F30; --card:#1B2A3D;
-    --primary:#FF7A1A; --primary-dark:#E8650A; --accent-blue:#17B2E0;
-    --text:#F3F6FA; --text-dim:#9FB0C3; --success:#2ECC71; --danger:#FF4D4D;
-    --radius:16px;
-  }
-  *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ height:100%; margin:0; padding:0; background:linear-gradient(160deg,#0a121c,#060a10); font-family:'Tahoma','Segoe UI',sans-serif; color:var(--text); -webkit-font-smoothing:antialiased; }
-  body{ display:block; width:100%; min-height:100vh; min-height:100dvh; margin:0; padding:0; overflow-x:hidden; }
-
-  .phone{ width:100% !important; max-width:100% !important; height:100vh !important; height:100dvh !important; min-height:100vh; min-height:100dvh; background:var(--dark); border-radius:0; border:none; box-shadow:none; overflow:hidden; position:relative; display:flex; flex-direction:column; margin:0 !important; padding:0 !important; }
-  .notch{ display:none; }
-
-  /* ===== الشاشات ===== */
-  .screen{ display:none; position:absolute; inset:0; }
-  .screen.active{ display:block; }
-  .screen.static{ overflow-y:auto; padding:calc(20px + env(safe-area-inset-top)) 20px 24px; }
-  .fullmap{ position:absolute; inset:0; background:#0B1622; }
-
-  /* ===== شاشات ثابتة ===== */
-  .brand{ text-align:center; margin-bottom:22px; }
-  .brand .logo{ font-size:44px; margin-bottom:6px; }
-  .brand h1{ font-size:20px; font-weight:800; }
-  .brand p{ font-size:12px; color:var(--text-dim); margin-top:4px; }
-
-  .role-btn{ display:flex; align-items:center; gap:12px; width:100%; background:var(--card); border:1.5px solid rgba(255,255,255,.07); border-radius:var(--radius); padding:16px; margin-bottom:12px; cursor:pointer; transition:transform .15s, border-color .2s; text-align:right; font-family:inherit; }
-  .role-btn:active{ transform:scale(.97); }
-  .role-btn .ic{ font-size:26px; flex-shrink:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(255,122,26,.12); border-radius:12px; }
-  .role-btn h3{ font-size:14.5px; font-weight:800; margin-bottom:2px; }
-  .role-btn p{ font-size:11px; color:var(--text-dim); }
-
-  .back-link{ display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--text-dim); background:none; border:none; cursor:pointer; margin-bottom:16px; font-family:inherit; padding:0; }
-
-  .center-icon{ width:74px; height:74px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:34px; margin:6px auto 16px; }
-  .center-icon.pending{ background:rgba(255,193,7,.14); }
-  .center-icon.banned{ background:rgba(255,77,77,.14); }
-  .static h2.center-title{ text-align:center; font-size:17px; font-weight:800; margin-bottom:8px; }
-  .static p.center-text{ text-align:center; font-size:12.5px; color:var(--text-dim); line-height:1.9; margin-bottom:18px; }
-
-  .field{ background:var(--card); border-radius:var(--radius); padding:11px 13px; margin-bottom:10px; border:1px solid rgba(255,255,255,.05); }
-  .field label{ display:block; font-size:11px; color:var(--text-dim); margin-bottom:6px; font-weight:600; }
-  .field input[type="text"], .field input[type="tel"], .field input[type="password"]{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-size:14px; font-weight:600; font-family:inherit; }
-  .field input::placeholder{ color:#5C6E82; font-weight:400; }
-  .field-hint{ font-size:10px; color:var(--text-dim); margin-top:6px; }
-
-  .btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:13px; border:none; border-radius:var(--radius); font-size:14.5px; font-weight:800; cursor:pointer; transition:transform .15s ease, opacity .2s; font-family:inherit; }
-  .btn:active{ transform:scale(.97); }
-  .btn:disabled{ opacity:.45; cursor:not-allowed; }
-  .btn-primary{ background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:0 8px 20px rgba(255,122,26,.35); }
-  .btn-secondary{ background:var(--card); color:var(--text); border:1px solid rgba(255,255,255,.08); }
-  .btn-success{ background:linear-gradient(135deg,#2ECC71,#27AE60); color:#fff; }
-  .btn-danger{ background:rgba(255,77,77,.12); color:var(--danger); border:1px solid rgba(255,77,77,.3); }
-  .btn-outline{ background:transparent; border:1.5px solid var(--accent-blue); color:var(--accent-blue); }
-  .btn-sm{ padding:9px; font-size:12px; border-radius:12px; }
-  .btn-row{ display:flex; gap:8px; margin-top:8px; }
-  .btn-row .btn{ flex:1; }
-
-  .toast{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%) translateY(120px); background:#1B2A3D; border:1px solid rgba(255,122,26,.4); color:#fff; padding:10px 18px; border-radius:999px; font-size:12px; font-weight:700; box-shadow:0 10px 25px rgba(0,0,0,.4); z-index:500; transition:transform .35s ease; white-space:nowrap; max-width:88%; overflow:hidden; text-overflow:ellipsis; }
-  .toast.show{ transform:translateX(-50%) translateY(0); }
-
-  /* ===== لوحة الأدمن ===== */
-  .admin-tabs{ display:flex; gap:6px; margin-bottom:16px; }
-  .admin-tab-btn{ flex:1; padding:10px 4px; border-radius:12px; border:1.5px solid rgba(255,255,255,.08); background:var(--card); color:var(--text-dim); font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .admin-tab-btn.active{ border-color:var(--primary); color:#fff; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); }
-  .admin-card{ background:var(--card); border-radius:var(--radius); padding:13px; margin-bottom:10px; border:1px solid rgba(255,255,255,.05); }
-  .admin-card h4{ font-size:13.5px; font-weight:800; margin-bottom:6px; }
-  .admin-card .meta-row{ display:flex; flex-wrap:wrap; gap:8px 14px; font-size:11px; color:var(--text-dim); margin-bottom:10px; }
-  .admin-card .meta-row b{ color:var(--text); }
-  .admin-card .top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
-  .admin-logout-row{ display:flex; justify-content:flex-end; margin-bottom:6px; }
-</style>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAROFzo1zlRo9W5kfSUJFwGHnbP2dyeXd4",
-    authDomain: "tuk-tuk-c585b.firebaseapp.com",
-    projectId: "tuk-tuk-c585b",
-    storageBucket: "tuk-tuk-c585b.firebasestorage.app",
-    messagingSenderId: "614907021136",
-    appId: "1:614907021136:web:febea73a9b08821e26ce55"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const fireDb = firebase.firestore();
-  try { fireDb.settings({ experimentalForceLongPolling: true, useFetchStreams: false }); } catch(e){}
-  const fireAuth = firebase.auth();
-  let firebaseAuthReady = false;
-
-  const firebaseAuthReadyPromise = fireAuth.signInAnonymously()
-    .then(() => { firebaseAuthReady = true; })
-    .catch(err => { console.error("Firebase Auth Error:", err); });
-
-  async function waitForFirebaseAuth(maxMs=2500){
-    if(firebaseAuthReady || fireAuth.currentUser) return true;
-    let timer;
-    try{
-      await Promise.race([
-        firebaseAuthReadyPromise,
-        new Promise(resolve => { timer = setTimeout(resolve, maxMs); })
-      ]);
-      return !!(firebaseAuthReady || fireAuth.currentUser);
-    }finally{ if(timer) clearTimeout(timer); }
-  }
-
-  async function firebaseCallWithTimeout(promise, ms=5000, label='Firebase') {
-    let timer;
-    const timeout = new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        const err = new Error(label + '_TIMEOUT');
-        err.code = 'FIREBASE_TIMEOUT';
-        reject(err);
-      }, ms);
-    });
-    try { return await Promise.race([promise, timeout]); }
-    finally { if(timer) clearTimeout(timer); }
-  }
-</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>توكتوكي - جرجا</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #FFD700; --dark: #1a1a1a; --light: #f8f9fa; --danger: #dc3545; --success: #28a745; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f4f6f9; color: #333; padding-bottom: 30px; }
+        header { background: var(--dark); color: var(--primary); text-align: center; padding: 15px; font-size: 24px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .container { max-width: 600px; margin: 15px auto; padding: 0 15px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card h2 { font-size: 18px; margin-bottom: 15px; color: var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+        button { background: var(--primary); color: var(--dark); font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .hidden { display: none; }
+        .driver-item { border: 1px solid #eee; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; }
+        .badge-active { background: var(--success); }
+        .badge-inactive { background: var(--danger); }
+        .alert { padding: 10px; border-radius: 6px; font-size: 14px; margin-bottom: 10px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<div class="phone">
-  <div class="notch"></div>
+<header><i class="fa-solid fa-taxi"></i> توكتوكي - جرجا</header>
 
-  <!-- 0) الشاشة الرئيسية -->
-  <div class="screen static active" id="screen-landing">
-    <div class="brand">
-      <div class="logo">🛺</div>
-      <h1>توكتوكي</h1>
-      <p>جرجا • برديس • البلينا • العسيرات وقراها</p>
+<div class="container">
+    <div id="alertBox" class="alert"></div>
+
+    <!-- واجهة المستخدمين والسائقين -->
+    <div id="publicView">
+        <div class="card">
+            <h2><i class="fa-solid fa-id-card"></i> تسجيل سائق جديد</h2>
+            <form id="driverForm">
+                <input type="text" id="driverName" placeholder="الاسم بالكامل" required>
+                <input type="tel" id="driverPhone" placeholder="رقم الهاتف (واتساب)" required>
+                <input type="text" id="driverArea" placeholder="المنطقة / القرية (مثال: المزاتة، الشيخ جبر)" required>
+                <button type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال طلب التسجيل</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-magnifying-glass"></i> الاستعلام عن حالة الحساب</h2>
+            <input type="tel" id="searchPhone" placeholder="أدخل رقم هاتفك">
+            <button onclick="checkStatus()"><i class="fa-solid fa-search"></i> بحث</button>
+            <div id="statusResult" style="margin-top:10px;"></div>
+        </div>
     </div>
 
-    <button class="role-btn" onclick="goRiderLogin()">
-      <div class="ic">🧍‍♂️</div>
-      <div><h3>دخول راكب</h3><p>اطلب توكتوك برقم موبايلك فقط</p></div>
-    </button>
+    <!-- لوحة التحكم للأدمن -->
+    <div id="adminView" class="hidden">
+        <div class="card" style="background:#fff3cd;">
+            <h2><i class="fa-solid fa-user-shield"></i> لوحة الإدارة</h2>
+            <button onclick="loadDrivers()"><i class="fa-solid fa-rotate"></i> تحديث القائمة</button>
+        </div>
 
-    <button class="role-btn" onclick="goDriverAuth()">
-      <div class="ic">🛺</div>
-      <div><h3>دخول / تسجيل سائق</h3><p>سجّل بياناتك وانتظر تفعيل الإدارة</p></div>
-    </button>
-  </div>
+        <div class="card">
+            <h2><i class="fa-solid fa-clock"></i> طلبات جديدة (في الانتظار)</h2>
+            <div id="pendingList">جاري التحميل...</div>
+        </div>
 
-  <!-- 1) دخول الراكب -->
-  <div class="screen static" id="screen-rider-login">
-    <button class="back-link" onclick="showScreen('screen-landing')">→ رجوع</button>
-    <div class="brand"><div class="logo">🧍‍♂️</div><h1>دخول الراكب</h1><p>أدخل رقم موبايلك للمتابعة</p></div>
-    <div class="field">
-      <label>📱 رقم الموبايل</label>
-      <input type="tel" id="riderPhoneInput" placeholder="01xxxxxxxxx" maxlength="11">
+        <div class="card">
+            <h2><i class="fa-solid fa-check-circle"></i> السائقون المعتمدون</h2>
+            <div id="activeList">جاري التحميل...</div>
+        </div>
     </div>
-    <button class="btn btn-primary" onclick="riderLoginSubmit()">🚀 متابعة كراكب</button>
-  </div>
-
-  <!-- 2) تسجيل / دخول السائق -->
-  <div class="screen static" id="screen-driver-auth">
-    <button class="back-link" onclick="showScreen('screen-landing')">→ رجوع</button>
-    <div class="brand"><div class="logo">🛺</div><h1>حساب السائق</h1><p>أدخل رقم موبايلك، وإذا كنت جديداً سنكمل تسجيلك</p></div>
-    <div class="field">
-      <label>📱 رقم الموبايل</label>
-      <input type="tel" id="driverPhoneInput" placeholder="01xxxxxxxxx" maxlength="11">
-    </div>
-    <button class="btn btn-primary" onclick="driverAuthSubmit()">متابعة</button>
-  </div>
-
-  <!-- 2ب) تسجيل سائق جديد -->
-  <div class="screen static" id="screen-driver-register">
-    <button class="back-link" onclick="showScreen('screen-driver-auth')">→ رجوع</button>
-    <div class="brand"><div class="logo">📝</div><h1>تسجيل سائق جديد</h1><p>بياناتك ستُراجَع من الإدارة قبل التفعيل</p></div>
-    <div class="field"><label>👤 الاسم بالكامل</label><input type="text" id="regName" placeholder="مثال: يوسف محمد"></div>
-    <div class="field"><label>📱 رقم الموبايل</label><input type="tel" id="regPhone" placeholder="01xxxxxxxxx" maxlength="11"></div>
-    <div class="field"><label>🪪 رقم البطاقة الشخصية</label><input type="text" id="regIdCard" placeholder="14 رقم" maxlength="20"></div>
-    <div class="field"><label>🛺 رقم التوكتوك</label><input type="text" id="regTuktuk" placeholder="مثال: سوهاج 12345"></div>
-    <div class="field"><label>👤 اسم المستخدم</label><input type="text" id="regUsername" placeholder="مثال: youssef123" autocomplete="username"></div>
-    <div class="field"><label>🔑 كلمة المرور</label><input type="password" id="regPassword" placeholder="6 أحرف أو أرقام على الأقل" autocomplete="new-password"></div>
-    <button class="btn btn-primary" onclick="driverRegisterSubmit()">✅ إرسال طلب التسجيل</button>
-  </div>
-
-  <!-- 2ج) انتظار تفعيل السائق -->
-  <div class="screen static" id="screen-driver-pending">
-    <div class="center-icon pending">⏳</div>
-    <h2 class="center-title">بانتظار تفعيل الأدمن</h2>
-    <p class="center-text">تم استلام طلب تسجيلك بنجاح، وحسابك الآن قيد المراجعة من إدارة توكتوكي.</p>
-    <button class="btn btn-outline" onclick="checkDriverPendingStatus()">🔄 تحديث حالة الحساب</button>
-    <button class="btn btn-secondary" style="margin-top:10px" onclick="logoutDriver()">تسجيل الخروج</button>
-  </div>
-
-  <!-- 3) دخول الأدمن (عبر هاش 28052003 في الرابط) -->
-  <div class="screen static" id="screen-admin-login">
-    <button class="back-link" onclick="showScreen('screen-landing')">→ رجوع</button>
-    <div class="brand"><div class="logo">🔐</div><h1>دخول الإشراف</h1><p>مخصص للمؤسس / الإدارة فقط</p></div>
-    <div class="field"><label>كلمة السر</label><input type="password" id="adminPassInput" placeholder="••••••••"></div>
-    <button class="btn btn-primary" onclick="adminLoginSubmit()">دخول لوحة التحكم</button>
-  </div>
-
-  <!-- لوحة تحكم الأدمن -->
-  <div class="screen static" id="screen-admin-app">
-    <div class="admin-logout-row"><button class="btn btn-danger btn-sm" onclick="adminLogout()">خروج</button></div>
-    <div class="brand" style="margin-bottom:14px"><div class="logo">🔐</div><h1>لوحة تحكم الأدمن</h1></div>
-    <div class="admin-tabs">
-      <button class="admin-tab-btn" id="tabBtnPending" onclick="setAdminTab('pending')">طلبات جديدة</button>
-      <button class="admin-tab-btn" id="tabBtnDrivers" onclick="setAdminTab('drivers')">السائقون</button>
-    </div>
-    <div id="adminContent"></div>
-  </div>
-
-  <div class="toast" id="toast"></div>
 </div>
 
 <script>
-const SESSION_KEY = 'tuktuki_session_v1';
-const ADMIN_SECRET_CODE = '28052003';
-const ADMIN_PASSWORD = '2852003';
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = {
+        apiKey: "AIzaSyDummyKey",
+        authDomain: "toktoki-dfb23.firebaseapp.com",
+        projectId: "toktoki-dfb23",
+        storageBucket: "toktoki-dfb23.appspot.com",
+        messagingSenderId: "100000000",
+        appId: "1:100000000:web:00000000"
+    };
 
-let dbCache = { drivers: [], riders: [], trips: [], complaints: [] };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(()=> t.classList.remove('show'), 3000);
-}
-
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function isValidPhone(p){ return /^01\d{9}$/.test((p||'').trim()); }
-function escapeHtml(str){ return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; } }
-function setSession(s){ try{ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }catch(e){} }
-function clearSession(){ try{ localStorage.removeItem(SESSION_KEY); }catch(e){} }
-
-function checkAdminSecretURL(){
-  let matched = false;
-  const hashVal = (location.hash || '').replace('#','').trim();
-  if(hashVal && hashVal === ADMIN_SECRET_CODE) matched = true;
-  try{
-    const params = new URLSearchParams(location.search);
-    if(params.get('admin') === ADMIN_SECRET_CODE) matched = true;
-  }catch(e){}
-
-  if(matched){
-    try{ history.replaceState(null, '', location.pathname); }catch(e){}
-    showScreen('screen-admin-login');
-    return true;
-  }
-  return false;
-}
-window.addEventListener('hashchange', checkAdminSecretURL);
-
-// --- Firebase Operations ---
-async function findDriverByPhoneDirect(phone){
-  await waitForFirebaseAuth(1500);
-  const snap = await firebaseCallWithTimeout(fireDb.collection('drivers').where('phone','==',String(phone)).limit(1).get(), 5000, 'DRIVER_PHONE_QUERY');
-  return snap.empty ? null : snap.docs[0].data();
-}
-
-async function writeDriverDirect(driver){
-  await waitForFirebaseAuth(1500);
-  const ref = fireDb.collection('drivers').doc(String(driver.id));
-  await ref.set(driver);
-  return driver;
-}
-
-// --- Handlers ---
-function goRiderLogin(){ showScreen('screen-rider-login'); }
-function goDriverAuth(){ showScreen('screen-driver-auth'); }
-
-function riderLoginSubmit(){
-  const phone = document.getElementById('riderPhoneInput').value.trim();
-  if(!isValidPhone(phone)){ showToast('⚠️ اكتب رقم موبايل مصري صحيح'); return; }
-  setSession({ role: 'rider', phone });
-  showToast('✅ تم دخول الراكب بنجاح');
-}
-
-async function driverAuthSubmit(){
-  const phone = document.getElementById('driverPhoneInput').value.trim();
-  if(!isValidPhone(phone)){ showToast('⚠️ اكتب رقم موبايل مصري صحيح'); return; }
-  
-  const btn = document.querySelector('#screen-driver-auth .btn-primary');
-  if(btn) btn.disabled = true;
-  showToast('⏳ جاري الفحص...');
-
-  try{
-    const driver = await findDriverByPhoneDirect(phone);
-    if(!driver){
-      document.getElementById('regPhone').value = phone;
-      showScreen('screen-driver-register');
-      return;
+    // التحقق من وضع الأدمن بواسطة #28052003 في الرابط
+    const isAdmin = window.location.hash === '#28052003';
+    if (isAdmin) {
+        document.getElementById('publicView').classList.add('hidden');
+        document.getElementById('adminView').classList.remove('hidden');
+        loadDrivers();
     }
-    setSession({ role: 'driver', id: driver.id, phone: driver.phone });
-    if(driver.status === 'pending'){
-      showScreen('screen-driver-pending');
-    } else {
-      showToast('✅ أهلاً ' + driver.name);
+
+    function showAlert(msg, isSuccess = true) {
+        const box = document.getElementById('alertBox');
+        box.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'}`;
+        box.innerText = msg;
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 4000);
     }
-  }catch(e){
-    console.error(e);
-    // Fallback to offline registration screen if network times out
-    document.getElementById('regPhone').value = phone;
-    showScreen('screen-driver-register');
-  }finally{
-    if(btn) btn.disabled = false;
-  }
-}
 
-async function driverRegisterSubmit(){
-  const name = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  const idCard = document.getElementById('regIdCard').value.trim();
-  const tuktuk = document.getElementById('regTuktuk').value.trim();
-  const username = (document.getElementById('regUsername').value || '').trim().toLowerCase();
-  const password = document.getElementById('regPassword').value || '';
+    // تسجيل سائق جديد
+    document.getElementById('driverForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('driverName').value.trim();
+        const phone = document.getElementById('driverPhone').value.trim();
+        const area = document.getElementById('driverArea').value.trim();
 
-  if(!name || !phone || !idCard || !tuktuk || !username || !password){
-    showToast('⚠️ من فضلك أكمل جميع البيانات');
-    return;
-  }
+        try {
+            await db.collection('drivers').doc(phone).set({
+                name: name,
+                phone: phone,
+                area: area,
+                status: 'pending',
+                createdAt: new Date()
+            });
+            showAlert('تم إرسال طلبك بنجاح! سيتم مراجعته وتفعيله قريباً.');
+            document.getElementById('driverForm').reset();
+        } catch (err) {
+            showAlert('حدث خطأ أثناء الإرسال: ' + err.message, false);
+        }
+    });
 
-  const btn = document.querySelector('#screen-driver-register .btn-primary');
-  if(btn) btn.disabled = true;
-  showToast('⏳ جاري تسجيل الحساب...');
+    // استعلام السائق عن حالته
+    async function checkStatus() {
+        const phone = document.getElementById('searchPhone').value.trim();
+        const resDiv = document.getElementById('statusResult');
+        if (!phone) return;
 
-  const driver = {
-    id: 'drv_' + Date.now(),
-    name, phone, idCard, tuktukNumber: tuktuk,
-    username, password,
-    status: 'pending', online: false,
-    createdAt: Date.now()
-  };
+        try {
+            const doc = await db.collection('drivers').doc(phone).get();
+            if (!doc.exists) {
+                resDiv.innerHTML = '<span style="color:red;">الرقم غير مسجل لديّنا.</span>';
+                return;
+            }
+            const data = doc.data();
+            if (data.status === 'active') {
+                resDiv.innerHTML = `<span class="badge badge-active">حسابك مفعل ومقبول ✔</span><br><br>الاسم: ${data.name}<br>المنطقة: ${data.area}`;
+            } else {
+                resDiv.innerHTML = `<span class="badge badge-inactive">طلبك قيد المراجعة ⏳</span>`;
+            }
+        } catch (err) {
+            resDiv.innerHTML = 'خطأ في الاستعلام: ' + err.message;
+        }
+    }
 
-  try{
-    await writeDriverDirect(driver);
-    setSession({ role: 'driver', id: driver.id, phone: driver.phone });
-    showScreen('screen-driver-pending');
-    showToast('✅ تم إرسال طلبك للإدارة بنجاح!');
-  }catch(e){
-    console.error(e);
-    showToast('❌ تعذر الاتصال بالخادم، أعد المحاولة');
-  }finally{
-    if(btn) btn.disabled = false;
-  }
-}
+    // تحميل السائقين للأدمن
+    async function loadDrivers() {
+        const pendingDiv = document.getElementById('pendingList');
+        const activeDiv = document.getElementById('activeList');
+        pendingDiv.innerHTML = 'جاري التحميل...';
+        activeDiv.innerHTML = 'جاري التحميل...';
 
-function checkDriverPendingStatus(){ showToast('⏳ طلبك قيد المراجعة حالياً من الأدمن'); }
-function logoutDriver(){ clearSession(); showScreen('screen-landing'); }
+        try {
+            const snapshot = await db.collection('drivers').get();
+            let pendingHTML = '';
+            let activeHTML = '';
 
-function adminLoginSubmit(){
-  const pass = document.getElementById('adminPassInput').value;
-  if(pass !== ADMIN_PASSWORD){ showToast('⚠️ كلمة السر غير صحيحة'); return; }
-  setSession({ role: 'admin' });
-  enterAdminApp();
-}
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                const card = `
+                    <div class="driver-item">
+                        <strong>${d.name}</strong> (${d.area})<br>
+                        <small>📱 ${d.phone}</small><br><br>
+                        ${d.status === 'pending' 
+                            ? `<button class="btn-success" onclick="updateStatus('${d.phone}', 'active')">✔ تفعيل الحساب</button>`
+                            : `<button class="btn-danger" onclick="updateStatus('${d.phone}', 'pending')">إيقاف الحساب</button>`}
+                    </div>
+                `;
+                if (d.status === 'pending') pendingHTML += card;
+                else activeHTML += card;
+            });
 
-function adminLogout(){ clearSession(); showScreen('screen-landing'); }
+            pendingDiv.innerHTML = pendingHTML || '<p>لا توجد طلبات معلقة.</p>';
+            activeDiv.innerHTML = activeHTML || '<p>لا يوجد سائقون معتمدون حالياً.</p>';
+        } catch (err) {
+            showAlert('خطأ أثناء تحميل البيانات: ' + err.message, false);
+        }
+    }
 
-function enterAdminApp(){
-  showScreen('screen-admin-app');
-  setAdminTab('pending');
-}
-
-async function setAdminTab(tab){
-  document.getElementById('tabBtnPending').classList.toggle('active', tab === 'pending');
-  document.getElementById('tabBtnDrivers').classList.toggle('active', tab === 'drivers');
-  const box = document.getElementById('adminContent');
-  box.innerHTML = '<div style="text-align:center;padding:20px;">⏳ جاري جلب البيانات...</div>';
-
-  try{
-    const snap = await fireDb.collection('drivers').get();
-    dbCache.drivers = snap.docs.map(d => d.data());
-  }catch(e){ console.error(e); }
-
-  if(tab === 'pending'){
-    const pending = dbCache.drivers.filter(d => d.status === 'pending');
-    box.innerHTML = pending.length === 0 ? '<div class="admin-card">لا توجد طلبات معلقة</div>' :
-      pending.map(d => `
-        <div class="admin-card">
-          <div class="top-row"><h4>${escapeHtml(d.name)}</h4></div>
-          <div class="meta-row">
-            <span>📱 <b>${d.phone}</b></span>
-            <span>🪪 <b>${escapeHtml(d.idCard)}</b></span>
-            <span>🛺 <b>${escapeHtml(d.tuktukNumber)}</b></span>
-          </div>
-          <button class="btn btn-success btn-sm" onclick="approveDriver('${d.id}')">✔ تفعيل الحساب</button>
-        </div>
-      `).join('');
-  } else {
-    const active = dbCache.drivers.filter(d => d.status === 'active');
-    box.innerHTML = active.length === 0 ? '<div class="admin-card">لا يوجد سائقون مقبولون</div>' :
-      active.map(d => `
-        <div class="admin-card">
-          <h4>${escapeHtml(d.name)}</h4>
-          <p>📱 ${d.phone} | 🛺 ${escapeHtml(d.tuktukNumber)}</p>
-        </div>
-      `).join('');
-  }
-}
-
-async function approveDriver(id){
-  try{
-    await fireDb.collection('drivers').doc(id).update({ status: 'active' });
-    showToast('✅ تم قبول السائق بنجاح');
-    setAdminTab('pending');
-  }catch(e){ showToast('❌ حدث خطأ أثناء التفعيل'); }
-}
-
-// Initial Boot Check
-window.onload = () => {
-  if(!checkAdminSecretURL()){
-    showScreen('screen-landing');
-  }
-};
+    // تغيير حالة السائق من الأدمن
+    async function updateStatus(phone, newStatus) {
+        try {
+            await db.collection('drivers').doc(phone).update({ status: newStatus });
+            showAlert('تم تحديث حالة السائق بنجاح');
+            loadDrivers();
+        } catch (err) {
+            showAlert('خطأ في التحديث: ' + err.message, false);
+        }
+    }
 </script>
 </body>
 </html>
